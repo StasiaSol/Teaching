@@ -1,5 +1,8 @@
+from datetime import datetime
+from dateutil.parser import parse
 import requests
 from bs4 import BeautifulSoup
+from webapp.model import db, News
 
 
 def get_html(url):
@@ -19,12 +22,25 @@ def get_python_news():
         )  # получаем дерево, с которым будем работать
         # получаем текст списка с нужным названием и разбиваем его на составляющие
         all_news = soup.find("ul", class_="list-recent-posts").findAll("li")
-        result_news = []
         for news in all_news:
             title = news.find("a").text
             url = news.find("a")["href"]
+
             published = news.find("time").text
-            result_news.append({"title": title, "url": url, "published": published})
-        return result_news
+            
+            try: 
+                published = parse(published).date()
+            except ValueError:
+                published = datetime.now()
+
+            save_news(title= title, url= url, published= published)
     else:
         return False
+
+def save_news(title, url, published):
+    news_exists = News.query.filter(News.url == url).count()
+    if not news_exists:
+
+        new_news = News(title = title, url = url, published = published)
+        db.session.add(new_news)
+        db.session.commit()
