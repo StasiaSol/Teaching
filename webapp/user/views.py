@@ -44,11 +44,11 @@ def register():
 def process_reg():
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(user_name=form.username.data).first()
+        """user = User.query.filter_by(user_name=form.username.data).first()
         if user :
             flash('Такой пользователь уже есть.')
             return render_template('user/registration.html',
-            page_title="Регистрация", form=form)
+            page_title="Регистрация", form=form)   # проверка существования пользователя"""
         
         new_user = User(user_name=form.username.data,
                          email=form.email.data, role='user')
@@ -57,5 +57,11 @@ def process_reg():
         db.session.commit()
         flash('Вы успешно зарегистрировались!')
         return redirect(url_for('user.login'))
-    flash('Пожалуйста, исправьте ошибки в форме')
-    return redirect(url_for('user.register'))
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash('Ошибка в поле "{}": {}'.format(
+                    getattr(form, field).label.text,
+                    error
+                ))
+        return redirect(url_for('user.register'))
